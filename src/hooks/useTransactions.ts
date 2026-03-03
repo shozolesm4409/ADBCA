@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, addDoc, deleteDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, deleteDoc, doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Transaction } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -102,7 +102,11 @@ export function useTransactions() {
       if (docSnap.exists()) {
         const { deletedAt, originalId, ...data } = docSnap.data() as any;
         // Restore to transactions
-        await addDoc(collection(db, 'transactions'), data);
+        if (originalId) {
+          await setDoc(doc(db, 'transactions', originalId), data);
+        } else {
+          await addDoc(collection(db, 'transactions'), data);
+        }
         // Delete from deleted_transactions
         await deleteDoc(docRef);
       }

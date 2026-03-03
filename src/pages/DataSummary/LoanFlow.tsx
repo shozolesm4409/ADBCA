@@ -40,7 +40,7 @@ interface LoanScheduleRow {
 }
 
 interface CustomSettings {
-  loanAmount: number;
+  pLoanAmount: number;
   loanLent: number;
 }
 
@@ -59,7 +59,7 @@ export default function LoanFlow() {
   // Custom Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [customSettings, setCustomSettings] = useState<Record<string, CustomSettings>>({});
-  const [currentSettings, setCurrentSettings] = useState<CustomSettings>({ loanAmount: 0, loanLent: 0 });
+  const [currentSettings, setCurrentSettings] = useState<CustomSettings>({ pLoanAmount: 0, loanLent: 0 });
 
   // Fetch all schedules and settings on mount
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function LoanFlow() {
       const isBkashL = department.toLowerCase() === 'bkashl';
       const settings = customSettings[department];
       
-      const loanAmount = isBkashL && settings?.loanAmount ? settings.loanAmount : data.income;
+      const loanAmount = data.income;
       const paidAmount = data.expense;
       const dueAmount = loanAmount - paidAmount;
       
@@ -122,8 +122,8 @@ export default function LoanFlow() {
         return sum + (isNaN(val) ? 0 : val);
       }, 0);
 
-      // P.loan Amount: (Loan Amount / 1000) * 25
-      const pLoanAmount = (loanAmount / 1000) * 25;
+      // P.loan Amount: Custom Setting or (Loan Amount / 1000) * 25
+      const pLoanAmount = isBkashL && settings?.pLoanAmount ? settings.pLoanAmount : (loanAmount / 1000) * 25;
 
       // T.Paid Amount: Loan Lent * P.loan Amount
       const totalPaidAmount = loanLent * pLoanAmount;
@@ -160,7 +160,7 @@ export default function LoanFlow() {
     
     // Load current settings if it's BkashL
     if (department.toLowerCase() === 'bkashl') {
-      setCurrentSettings(customSettings[department] || { loanAmount: 0, loanLent: 0 });
+      setCurrentSettings(customSettings[department] || { pLoanAmount: 0, loanLent: 0 });
     }
     
     try {
@@ -293,9 +293,26 @@ export default function LoanFlow() {
   };
 
   const handleRowChange = (id: string, field: keyof LoanScheduleRow, value: string) => {
-    setScheduleRows(scheduleRows.map(r => 
-      r.id === id ? { ...r, [field]: value } : r
-    ));
+    setScheduleRows(scheduleRows.map(r => {
+      if (r.id === id) {
+        const updatedRow = { ...r, [field]: value };
+        
+        if (field === 'input1' && selectedLoan) {
+          const currentLoanData = loanData.find(l => l.department === selectedLoan.department);
+          if (currentLoanData) {
+            const input1Val = parseFloat(value);
+            if (!isNaN(input1Val)) {
+              updatedRow.input2 = (input1Val * currentLoanData.pLoanAmount).toString();
+            } else if (value === '') {
+              updatedRow.input2 = '';
+            }
+          }
+        }
+        
+        return updatedRow;
+      }
+      return r;
+    }));
   };
 
   // Check match for a row
@@ -395,38 +412,52 @@ export default function LoanFlow() {
       {selectedLoan && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                Loan Details: <span className="text-blue-600">Bank Loan - {selectedLoan.department}</span>
-                {selectedLoan.department.toLowerCase() === 'bkashl' && (
-                  <button
-                    onClick={() => setIsSettingsOpen(true)}
-                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors ml-2"
-                    title="Custom Settings"
-                  >
-                    <SettingsIcon className="w-5 h-5" />
-                  </button>
-                )}
-              </h2>
-              <div className="flex items-center gap-2">
+            <div className="p-4 md:p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="flex justify-between items-center w-full md:w-auto">
+                <h2 className="text-lg md:text-xl font-bold text-slate-800 flex flex-wrap items-center gap-2">
+                  Loan Details: <span className="text-blue-600">Bank Loan - {selectedLoan.department}</span>
+                  {selectedLoan.department.toLowerCase() === 'bkashl' && (
+                    <button
+                      onClick={() => setIsSettingsOpen(true)}
+                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors ml-1"
+                      title="Custom Settings"
+                    >
+                      <SettingsIcon className="w-5 h-5" />
+                    </button>
+                  )}
+                </h2>
+                <button 
+                  onClick={() => setSelectedLoan(null)}
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors md:hidden"
+                >
+                  <X className="w-5 h-5 text-slate-500" />
+                </button>
+              </div>
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <button
+                  onClick={handleAddRow}
+                  className="flex-1 md:flex-none flex justify-center items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base"
+                >
+                  <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Add Month</span><span className="sm:hidden">Add</span>
+                </button>
                 <button
                   onClick={handleSaveSchedule}
                   disabled={isSaving || isLoadingSchedule}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                  className="flex-1 md:flex-none flex justify-center items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 text-sm md:text-base"
                 >
                   {isSaving ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                      <Loader2 className="w-4 h-4 animate-spin" /> <span className="hidden sm:inline">Saving...</span>
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4" /> Save
+                      <Save className="w-4 h-4" /> <span className="hidden sm:inline">Save</span><span className="sm:hidden">Save</span>
                     </>
                   )}
                 </button>
                 <button 
                   onClick={() => setSelectedLoan(null)}
-                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors hidden md:block"
                 >
                   <X className="w-5 h-5 text-slate-500" />
                 </button>
@@ -440,16 +471,7 @@ export default function LoanFlow() {
                 </div>
               ) : (
                 <>
-                  <div className="mb-4 flex justify-end">
-                    <button
-                      onClick={handleAddRow}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      <Plus className="w-4 h-4" /> Add Month
-                    </button>
-                  </div>
-
-                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <div className="border border-slate-200 rounded-lg overflow-hidden hidden md:block">
                     <table className="w-full text-sm">
                       <thead className="bg-slate-50 text-slate-600 font-medium">
                         <tr>
@@ -519,6 +541,75 @@ export default function LoanFlow() {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Mobile View */}
+                  <div className="md:hidden space-y-4">
+                    {scheduleRows.map((row, index) => {
+                      const status = checkMatch(row, selectedLoan.department);
+                      return (
+                        <div key={row.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm relative">
+                          <div className="flex justify-between items-center mb-3">
+                            <span className="text-sm font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md">#{index + 1}</span>
+                            <div className="flex items-center gap-2">
+                              {status === 'Done' ? (
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                  Done
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                                  No Match
+                                </span>
+                              )}
+                              <button
+                                onClick={() => handleRemoveRow(row.id)}
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-xs font-medium text-slate-500 mb-1">Month</label>
+                              <select
+                                value={row.month}
+                                onChange={(e) => handleRowChange(row.id, 'month', e.target.value)}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                              >
+                                {getMonthOptions().map(opt => (
+                                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                              </select>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Input 1</label>
+                                <input
+                                  type="text"
+                                  value={row.input1}
+                                  onChange={(e) => handleRowChange(row.id, 'input1', e.target.value)}
+                                  className="w-full px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500 text-blue-700 font-medium text-sm"
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Input 2 (Amount)</label>
+                                <input
+                                  type="text"
+                                  value={row.input2}
+                                  onChange={(e) => handleRowChange(row.id, 'input2', e.target.value)}
+                                  className="w-full px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500 text-blue-700 font-bold text-sm"
+                                  placeholder="0"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </>
               )}
             </div>
@@ -545,14 +636,14 @@ export default function LoanFlow() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Custom Loan Amount
+                  Custom P.loan Amount
                 </label>
                 <input
                   type="number"
-                  value={currentSettings.loanAmount || ''}
-                  onChange={(e) => setCurrentSettings(prev => ({ ...prev, loanAmount: parseFloat(e.target.value) || 0 }))}
+                  value={currentSettings.pLoanAmount || ''}
+                  onChange={(e) => setCurrentSettings(prev => ({ ...prev, pLoanAmount: parseFloat(e.target.value) || 0 }))}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter custom loan amount"
+                  placeholder="Enter custom P.loan amount"
                 />
               </div>
               <div>
