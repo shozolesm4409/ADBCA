@@ -11,7 +11,8 @@ import {
   Trash2,
   Save,
   Loader2,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Award
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
@@ -49,6 +50,7 @@ export default function LoanFlow() {
   const { transactions, loading } = useTransactions();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLoan, setSelectedLoan] = useState<{ category: string; department: string } | null>(null);
+  const [certificateData, setCertificateData] = useState<any | null>(null);
   
   // Schedule State
   const [scheduleRows, setScheduleRows] = useState<LoanScheduleRow[]>([]);
@@ -117,13 +119,13 @@ export default function LoanFlow() {
       const schedule = allSchedules[department] || [];
       
       // Loan Lent: Sum of Input 1 or Custom Setting
-      const loanLent = isBkashL && settings?.loanLent ? settings.loanLent : schedule.reduce((sum, row) => {
+      const loanLent = settings?.loanLent ? settings.loanLent : schedule.reduce((sum, row) => {
         const val = parseFloat(row.input1);
         return sum + (isNaN(val) ? 0 : val);
       }, 0);
 
       // P.loan Amount: Custom Setting or (Loan Amount / 1000) * 25
-      const pLoanAmount = isBkashL && settings?.pLoanAmount ? settings.pLoanAmount : (loanAmount / 1000) * 25;
+      const pLoanAmount = settings?.pLoanAmount ? settings.pLoanAmount : (loanAmount / 1000) * 25;
 
       // T.Paid Amount: Loan Lent * P.loan Amount
       const totalPaidAmount = loanLent * pLoanAmount;
@@ -141,9 +143,25 @@ export default function LoanFlow() {
         isBkashL
       };
     }).filter(item => 
-      item.department.toLowerCase().includes(searchTerm.toLowerCase())
+      `Bank Loan - ${item.department}`.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [transactions, searchTerm, allSchedules, customSettings]);
+
+  const totals = useMemo(() => {
+    return loanData.reduce((acc, row) => ({
+      loanAmount: acc.loanAmount + row.loanAmount,
+      paidAmount: acc.paidAmount + row.paidAmount,
+      dueAmount: acc.dueAmount + row.dueAmount,
+      loanLent: acc.loanLent + row.loanLent,
+      totalPaidAmount: acc.totalPaidAmount + row.totalPaidAmount,
+    }), {
+      loanAmount: 0,
+      paidAmount: 0,
+      dueAmount: 0,
+      loanLent: 0,
+      totalPaidAmount: 0,
+    });
+  }, [loanData]);
 
   // Helper to generate safe document ID
   const getScheduleDocId = (department: string) => {
@@ -345,21 +363,45 @@ export default function LoanFlow() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold text-slate-800">Loan Flow</h1>
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Search by LoanType..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full sm:w-64 pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* Total Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
+          <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase mb-1">Loan Amount</p>
+          <p className="text-lg sm:text-xl font-bold text-blue-600">{totals.loanAmount.toLocaleString()}</p>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
+          <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase mb-1">Paid Amount</p>
+          <p className="text-lg sm:text-xl font-bold text-green-600">{totals.paidAmount.toLocaleString()}</p>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
+          <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase mb-1">Due Amount</p>
+          <p className="text-lg sm:text-xl font-bold text-orange-600">{totals.dueAmount.toLocaleString()}</p>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
+          <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase mb-1">Loan Lent</p>
+          <p className="text-lg sm:text-xl font-bold text-purple-600">{totals.loanLent.toLocaleString()}</p>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center col-span-2 md:col-span-1">
+          <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase mb-1">T.Paid Amount</p>
+          <p className="text-lg sm:text-xl font-bold text-emerald-600">{totals.totalPaidAmount.toLocaleString()}</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
@@ -387,12 +429,22 @@ export default function LoanFlow() {
                   <td className="px-4 py-3 text-right text-red-600 font-medium">{row.pLoanAmount.toLocaleString()}</td>
                   <td className="px-4 py-3 text-right text-emerald-600 font-medium">{row.totalPaidAmount.toLocaleString()}</td>
                   <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => handleViewDetails(row.department)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => handleViewDetails(row.department)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="View Details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setCertificateData(row)}
+                        className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                        title="View Certificate"
+                      >
+                        <Award className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -408,6 +460,68 @@ export default function LoanFlow() {
         </div>
       </div>
 
+      {/* Mobile View for Main Table */}
+      <div className="md:hidden space-y-4">
+        {loanData.map((row, index) => (
+          <div key={row.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md">#{index + 1}</span>
+                <h3 className="font-bold text-slate-800">Bank Loan - {row.department}</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleViewDetails(row.department)}
+                  className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                  title="View Details"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setCertificateData(row)}
+                  className="p-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors"
+                  title="View Certificate"
+                >
+                  <Award className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-y-4 gap-x-4 text-sm">
+              <div>
+                <p className="text-slate-500 mb-1 text-xs">Loan Amount</p>
+                <p className="text-blue-600 font-bold">{row.loanAmount.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-slate-500 mb-1 text-xs">Paid Amount</p>
+                <p className="text-green-600 font-bold">{row.paidAmount.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-slate-500 mb-1 text-xs">Due Amount</p>
+                <p className="text-orange-600 font-bold">{row.dueAmount.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-slate-500 mb-1 text-xs">Loan Lent</p>
+                <p className="text-purple-600 font-bold">{row.loanLent.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-slate-500 mb-1 text-xs">P.loan Amount</p>
+                <p className="text-red-600 font-bold">{row.pLoanAmount.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-slate-500 mb-1 text-xs">T.Paid Amount</p>
+                <p className="text-emerald-600 font-bold">{row.totalPaidAmount.toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+        {loanData.length === 0 && (
+          <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500 shadow-sm">
+            No loan data found.
+          </div>
+        )}
+      </div>
+
       {/* Details Modal */}
       {selectedLoan && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -416,15 +530,13 @@ export default function LoanFlow() {
               <div className="flex justify-between items-center w-full md:w-auto">
                 <h2 className="text-lg md:text-xl font-bold text-slate-800 flex flex-wrap items-center gap-2">
                   Loan Details: <span className="text-blue-600">Bank Loan - {selectedLoan.department}</span>
-                  {selectedLoan.department.toLowerCase() === 'bkashl' && (
-                    <button
-                      onClick={() => setIsSettingsOpen(true)}
-                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors ml-1"
-                      title="Custom Settings"
-                    >
-                      <SettingsIcon className="w-5 h-5" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setIsSettingsOpen(true)}
+                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors ml-1"
+                    title="Custom Settings"
+                  >
+                    <SettingsIcon className="w-5 h-5" />
+                  </button>
                 </h2>
                 <button 
                   onClick={() => setSelectedLoan(null)}
@@ -682,6 +794,93 @@ export default function LoanFlow() {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Certificate Modal */}
+      {certificateData && (
+        <div className="fixed inset-0 bg-slate-900/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden relative border border-slate-200">
+            {/* Top decorative bar */}
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
+            
+            <button 
+              onClick={() => setCertificateData(null)}
+              className="absolute top-3 right-3 p-1.5 hover:bg-slate-100 rounded-full transition-colors z-20"
+            >
+              <X className="w-5 h-5 text-slate-400" />
+            </button>
+            
+            <div className="p-8 text-center relative">
+              {/* Background watermark */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
+                <Award className="w-64 h-64 text-slate-900" />
+              </div>
+              
+              <div className="relative z-10">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-50 to-purple-50 rounded-full flex items-center justify-center mb-4 shadow-sm border border-purple-100">
+                  <Award className="w-8 h-8 text-purple-600" />
+                </div>
+                
+                <h2 className="text-2xl font-serif font-bold text-slate-800 mb-1 tracking-tight">Loan Certificate</h2>
+                <p className="text-sm text-slate-500 mb-6 uppercase tracking-widest font-semibold">Bank Loan - {certificateData.department}</p>
+                
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Loan Amount</p>
+                    <p className="text-lg font-bold text-blue-600">{certificateData.loanAmount.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Loan Lent</p>
+                    <p className="text-lg font-bold text-purple-600">{certificateData.loanLent.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">T.Paid Amount</p>
+                    <p className="text-lg font-bold text-emerald-600">{certificateData.totalPaidAmount.toLocaleString()}</p>
+                  </div>
+                </div>
+                
+                {(() => {
+                  const excessAmount = certificateData.totalPaidAmount - certificateData.loanAmount;
+                  const excessPercentage = certificateData.loanAmount > 0 
+                    ? ((excessAmount / certificateData.loanAmount) * 100).toFixed(2) 
+                    : 0;
+                  
+                  return (
+                    <div className="bg-slate-800 p-5 rounded-xl text-white shadow-md mx-auto relative overflow-hidden">
+                      {/* Decorative background element */}
+                      <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
+                      <div className="absolute -left-4 -bottom-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl"></div>
+                      
+                      <div className="relative z-10">
+                        <p className="text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">Excess Paid Analysis</p>
+                        <div className="flex items-baseline justify-center gap-2 mb-2">
+                          <span className="text-3xl font-bold text-white">+{excessAmount.toLocaleString()}</span>
+                          <span className="text-sm font-medium text-slate-400">BDT</span>
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                          <p className="text-xs font-medium text-emerald-300">
+                            {excessPercentage}% more than Loan Amount
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                
+                <div className="mt-8 pt-5 border-t border-slate-100 flex justify-between items-center px-4 text-slate-400 text-xs font-medium">
+                  <div className="text-left">
+                    <p className="mb-0.5">Date Generated</p>
+                    <p className="text-slate-600">{new Date().toLocaleDateString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="mb-0.5">Authorized By</p>
+                    <p className="text-slate-600 font-serif italic">System Admin</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

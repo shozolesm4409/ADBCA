@@ -113,7 +113,9 @@ export default function Dashboard() {
   const overallExpense = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   const overallAvailable = overallIncome - overallExpense;
   const overallSaving = filteredTransactions.filter(t => t.category === 'Saving').reduce((sum, t) => sum + t.amount, 0);
-  const overallBankLoan = filteredTransactions.filter(t => t.category === 'Bank Loan').reduce((sum, t) => sum + t.amount, 0);
+  const overallBankLoan = filteredTransactions.filter(t => t.category === 'Bank Loan' && t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  const overallPaidBankLoan = filteredTransactions.filter(t => t.category === 'Bank Loan' && t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const overallDueBankLoan = overallBankLoan - overallPaidBankLoan;
   const overallHomeExpense = filteredTransactions.filter(t => t.category === 'Home Expense').reduce((sum, t) => sum + t.amount, 0);
 
   let monthsToDisplay: Date[] = [];
@@ -242,7 +244,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-4">
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
           <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Total Income</p>
           <p className="text-xl font-bold text-emerald-600">{overallIncome.toLocaleString()}</p>
@@ -267,6 +269,18 @@ export default function Dashboard() {
           <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Bank Loan</p>
           <p className="text-xl font-bold text-blue-600">
             {overallBankLoan.toLocaleString()}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
+          <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Paid Loan</p>
+          <p className="text-xl font-bold text-green-600">
+            {overallPaidBankLoan.toLocaleString()}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
+          <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Due Loan</p>
+          <p className="text-xl font-bold text-orange-600">
+            {overallDueBankLoan.toLocaleString()}
           </p>
         </div>
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">

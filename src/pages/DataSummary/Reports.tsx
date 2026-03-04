@@ -56,7 +56,7 @@ export default function Reports() {
   const overallExpense = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   const overallAvailable = overallIncome - overallExpense;
   const overallSaving = filteredTransactions.filter(t => t.category === 'Saving').reduce((sum, t) => sum + t.amount, 0);
-  const overallBankLoan = filteredTransactions.filter(t => t.category === 'Bank Loan').reduce((sum, t) => sum + t.amount, 0);
+  const overallBankLoan = filteredTransactions.filter(t => t.category === 'Bank Loan' && t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   const overallHomeExpense = filteredTransactions.filter(t => t.category === 'Home Expense').reduce((sum, t) => sum + t.amount, 0);
 
   // Monthly Summary Data

@@ -165,13 +165,13 @@ export default function TMIEPDFFilter() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto p-4">
+    <div className="space-y-6 max-w-6xl mx-auto p-1 sm:p-4">
       {/* Navigation Buttons */}
-      <div className="flex flex-wrap justify-center gap-2 mb-8">
+      <div className="flex flex-nowrap overflow-x-auto justify-start sm:justify-center gap-2 mb-8 p-1 no-scrollbar">
         <button
           onClick={() => { setActiveTab('today'); resetAll(); }}
           className={cn(
-            "px-6 py-2 rounded-md text-white font-medium transition-colors",
+            "px-3 sm:px-6 py-1.5 sm:py-2 rounded-md text-white text-sm sm:text-base font-medium transition-colors whitespace-nowrap",
             activeTab === 'today' ? "bg-green-600" : "bg-blue-500 hover:bg-blue-600"
           )}
         >
@@ -180,7 +180,7 @@ export default function TMIEPDFFilter() {
         <button
           onClick={() => { setActiveTab('monthly'); resetAll(); }}
           className={cn(
-            "px-6 py-2 rounded-md text-white font-medium transition-colors",
+            "px-3 sm:px-6 py-1.5 sm:py-2 rounded-md text-white text-sm sm:text-base font-medium transition-colors whitespace-nowrap",
             activeTab === 'monthly' ? "bg-green-600" : "bg-orange-500 hover:bg-orange-600"
           )}
         >
@@ -189,7 +189,7 @@ export default function TMIEPDFFilter() {
         <button
           onClick={() => { setActiveTab('ie'); resetAll(); }}
           className={cn(
-            "px-6 py-2 rounded-md text-white font-medium transition-colors",
+            "px-3 sm:px-6 py-1.5 sm:py-2 rounded-md text-white text-sm sm:text-base font-medium transition-colors whitespace-nowrap",
             activeTab === 'ie' ? "bg-green-600" : "bg-red-500 hover:bg-red-600"
           )}
         >
@@ -198,11 +198,11 @@ export default function TMIEPDFFilter() {
         <button
           onClick={() => { setActiveTab('pdf'); resetAll(); }}
           className={cn(
-            "px-6 py-2 rounded-md text-white font-medium transition-colors",
+            "px-3 sm:px-6 py-1.5 sm:py-2 rounded-md text-white text-sm sm:text-base font-medium transition-colors whitespace-nowrap",
             activeTab === 'pdf' ? "bg-green-600" : "bg-purple-600 hover:bg-purple-700"
           )}
         >
-          Generate PDF
+          PDF
         </button>
       </div>
 
@@ -227,18 +227,18 @@ export default function TMIEPDFFilter() {
 
           {showTodayResult && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-                <div className="bg-gradient-to-br from-orange-500 to-pink-600 p-4 rounded-lg text-white shadow-lg">
-                  <h3 className="text-lg font-semibold mb-1">Total Expense</h3>
-                  <p className="text-2xl font-bold">{todayExpense.toLocaleString()}</p>
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 max-w-4xl mx-auto">
+                <div className="bg-gradient-to-br from-orange-500 to-pink-600 p-3 sm:p-4 rounded-lg text-white shadow-lg">
+                  <h3 className="text-sm sm:text-lg font-semibold mb-1">Total Expense</h3>
+                  <p className="text-lg sm:text-2xl font-bold">{todayExpense.toLocaleString()}</p>
                 </div>
-                <div className="bg-gradient-to-br from-green-600 to-green-500 p-4 rounded-lg text-white shadow-lg">
-                  <h3 className="text-lg font-semibold mb-1">Total Deposit</h3>
-                  <p className="text-2xl font-bold">{todayIncome.toLocaleString()}</p>
+                <div className="bg-gradient-to-br from-green-600 to-green-500 p-3 sm:p-4 rounded-lg text-white shadow-lg">
+                  <h3 className="text-sm sm:text-lg font-semibold mb-1">Total Deposit</h3>
+                  <p className="text-lg sm:text-2xl font-bold">{todayIncome.toLocaleString()}</p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow overflow-hidden border border-slate-200">
+              <div className="bg-white rounded-lg shadow overflow-hidden border border-slate-200 hidden md:block">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="bg-blue-500 text-white">
@@ -273,6 +273,36 @@ export default function TMIEPDFFilter() {
                     </tbody>
                   </table>
                 </div>
+              </div>
+
+              {/* Mobile View for Today Table */}
+              <div className="md:hidden space-y-3 text-left">
+                {todayTransactions.length > 0 ? (
+                  todayTransactions.map((t) => (
+                    <div key={t.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm relative">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="text-xs font-semibold text-slate-500">{format(new Date(t.date), 'dd MMM yyyy')}</p>
+                          <h4 className="font-bold text-slate-800 mt-1">{t.category}</h4>
+                        </div>
+                        <span className={cn(
+                          "px-2 py-1 rounded-full text-xs font-bold",
+                          t.type === 'income' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                        )}>
+                          {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm mt-3 pt-3 border-t border-slate-100">
+                        <span className="text-slate-500">Department:</span>
+                        <span className="font-medium text-slate-800">{t.department}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="bg-white border border-slate-200 rounded-xl p-6 text-center text-red-500 font-bold shadow-sm">
+                    No data found for this date.
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-center gap-4">
@@ -327,14 +357,14 @@ export default function TMIEPDFFilter() {
 
           {showMonthlyResult && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-                <div className="bg-gradient-to-br from-orange-500 to-pink-600 p-4 rounded-lg text-white shadow-lg">
-                  <h3 className="text-lg font-semibold mb-1">Total Expense</h3>
-                  <p className="text-2xl font-bold">{monthlyExpense.toLocaleString()}</p>
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 max-w-4xl mx-auto">
+                <div className="bg-gradient-to-br from-orange-500 to-pink-600 p-3 sm:p-4 rounded-lg text-white shadow-lg">
+                  <h3 className="text-sm sm:text-lg font-semibold mb-1">Total Expense</h3>
+                  <p className="text-lg sm:text-2xl font-bold">{monthlyExpense.toLocaleString()}</p>
                 </div>
-                <div className="bg-gradient-to-br from-green-600 to-green-500 p-4 rounded-lg text-white shadow-lg">
-                  <h3 className="text-lg font-semibold mb-1">Total Deposit</h3>
-                  <p className="text-2xl font-bold">{monthlyIncome.toLocaleString()}</p>
+                <div className="bg-gradient-to-br from-green-600 to-green-500 p-3 sm:p-4 rounded-lg text-white shadow-lg">
+                  <h3 className="text-sm sm:text-lg font-semibold mb-1">Total Deposit</h3>
+                  <p className="text-lg sm:text-2xl font-bold">{monthlyIncome.toLocaleString()}</p>
                 </div>
               </div>
 
@@ -368,7 +398,7 @@ export default function TMIEPDFFilter() {
                 </button>
               </div>
 
-              <div className="bg-white rounded-lg shadow overflow-hidden border border-slate-200">
+              <div className="bg-white rounded-lg shadow overflow-hidden border border-slate-200 hidden md:block">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="bg-blue-500 text-white">
@@ -409,6 +439,42 @@ export default function TMIEPDFFilter() {
                   </table>
                 </div>
               </div>
+
+              {/* Mobile View for Monthly Table */}
+              <div className="md:hidden space-y-3 text-left">
+                {monthlyTransactions.length > 0 ? (
+                  monthlyTransactions
+                    .filter(t => {
+                      if (monthlyActiveSubTab === 'income') return t.type === 'income';
+                      if (monthlyActiveSubTab === 'expense') return t.type === 'expense';
+                      return true;
+                    })
+                    .map((t) => (
+                      <div key={t.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm relative">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="text-xs font-semibold text-slate-500">{format(new Date(t.date), 'dd MMM yyyy')}</p>
+                            <h4 className="font-bold text-slate-800 mt-1">{t.category}</h4>
+                          </div>
+                          <span className={cn(
+                            "px-2 py-1 rounded-full text-xs font-bold",
+                            t.type === 'income' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                          )}>
+                            {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm mt-3 pt-3 border-t border-slate-100">
+                          <span className="text-slate-500">Department:</span>
+                          <span className="font-medium text-slate-800">{t.department}</span>
+                        </div>
+                      </div>
+                    ))
+                ) : (
+                  <div className="bg-white border border-slate-200 rounded-xl p-6 text-center text-red-500 font-bold shadow-sm">
+                    No data found for this period.
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -447,18 +513,18 @@ export default function TMIEPDFFilter() {
 
           {showPdfResult && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-                <div className="bg-gradient-to-br from-orange-500 to-pink-600 p-4 rounded-lg text-white shadow-lg">
-                  <h3 className="text-lg font-semibold mb-1">Expense:</h3>
-                  <p className="text-2xl font-bold">{pdfExpense.toLocaleString()}</p>
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 max-w-4xl mx-auto">
+                <div className="bg-gradient-to-br from-orange-500 to-pink-600 p-3 sm:p-4 rounded-lg text-white shadow-lg">
+                  <h3 className="text-sm sm:text-lg font-semibold mb-1">Expense:</h3>
+                  <p className="text-lg sm:text-2xl font-bold">{pdfExpense.toLocaleString()}</p>
                 </div>
-                <div className="bg-gradient-to-br from-green-600 to-green-500 p-4 rounded-lg text-white shadow-lg">
-                  <h3 className="text-lg font-semibold mb-1">Income:</h3>
-                  <p className="text-2xl font-bold">{pdfIncome.toLocaleString()}</p>
+                <div className="bg-gradient-to-br from-green-600 to-green-500 p-3 sm:p-4 rounded-lg text-white shadow-lg">
+                  <h3 className="text-sm sm:text-lg font-semibold mb-1">Income:</h3>
+                  <p className="text-lg sm:text-2xl font-bold">{pdfIncome.toLocaleString()}</p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow overflow-hidden border border-slate-200">
+              <div className="bg-white rounded-lg shadow overflow-hidden border border-slate-200 hidden md:block">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="bg-blue-500 text-white">
@@ -492,6 +558,36 @@ export default function TMIEPDFFilter() {
                     </tbody>
                   </table>
                 </div>
+              </div>
+
+              {/* Mobile View for PDF Table */}
+              <div className="md:hidden space-y-3 text-left">
+                {pdfTransactions.length > 0 ? (
+                  pdfTransactions.map((t) => (
+                    <div key={t.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm relative">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="text-xs font-semibold text-slate-500">{format(new Date(t.date), 'dd MMM yyyy')}</p>
+                          <h4 className="font-bold text-slate-800 mt-1">{t.category}</h4>
+                        </div>
+                        <span className={cn(
+                          "px-2 py-1 rounded-full text-xs font-bold",
+                          t.type === 'income' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                        )}>
+                          {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm mt-3 pt-3 border-t border-slate-100">
+                        <span className="text-slate-500">Department:</span>
+                        <span className="font-medium text-slate-800">{t.department}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="bg-white border border-slate-200 rounded-xl p-6 text-center text-red-500 font-bold shadow-sm">
+                    No data found for this period.
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-center gap-4">
@@ -552,28 +648,28 @@ export default function TMIEPDFFilter() {
 
           {showIeResult && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-                <div className="bg-white border-2 border-slate-300 p-4 rounded-lg shadow-sm">
-                  <h3 className="text-lg font-medium text-slate-700 mb-1">
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 max-w-4xl mx-auto">
+                <div className="bg-white border-2 border-slate-300 p-3 sm:p-4 rounded-lg shadow-sm">
+                  <h3 className="text-sm sm:text-lg font-medium text-slate-700 mb-1">
                     {ieFilterType === 'Income' ? 'Total Income' : 'Total Expense'}
                   </h3>
-                  <p className="text-xl font-bold flex items-center justify-center gap-2">
-                    <Wallet className="w-5 h-5 text-slate-600" />
+                  <p className="text-lg sm:text-xl font-bold flex items-center justify-center gap-2">
+                    <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" />
                     {ieTotal.toLocaleString()}
                   </p>
                 </div>
-                <div className="bg-white border-2 border-slate-300 p-4 rounded-lg shadow-sm">
-                  <h3 className="text-lg font-medium text-slate-700 mb-1">
+                <div className="bg-white border-2 border-slate-300 p-3 sm:p-4 rounded-lg shadow-sm">
+                  <h3 className="text-sm sm:text-lg font-medium text-slate-700 mb-1">
                     {ieFilterType === 'Income' ? 'Income Count' : 'Expense Count'}
                   </h3>
-                  <p className="text-xl font-bold flex items-center justify-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-slate-600" />
+                  <p className="text-lg sm:text-xl font-bold flex items-center justify-center gap-2">
+                    <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" />
                     {ieTransactions.length}
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow overflow-hidden border border-slate-200">
+              <div className="bg-white rounded-lg shadow overflow-hidden border border-slate-200 hidden md:block">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="bg-blue-500 text-white">
@@ -603,6 +699,36 @@ export default function TMIEPDFFilter() {
                     </tbody>
                   </table>
                 </div>
+              </div>
+
+              {/* Mobile View for IE Table */}
+              <div className="md:hidden space-y-3 text-left">
+                {ieTransactions.length > 0 ? (
+                  ieTransactions.map((t) => (
+                    <div key={t.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm relative">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="text-xs font-semibold text-slate-500">{format(new Date(t.date), 'dd MMM yyyy')}</p>
+                          <h4 className="font-bold text-slate-800 mt-1 capitalize">{t.type}</h4>
+                        </div>
+                        <span className={cn(
+                          "px-2 py-1 rounded-full text-xs font-bold",
+                          t.type === 'income' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                        )}>
+                          {t.amount.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm mt-3 pt-3 border-t border-slate-100">
+                        <span className="text-slate-500">Department:</span>
+                        <span className="font-medium text-slate-800">{t.department}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="bg-white border border-slate-200 rounded-xl p-6 text-center text-red-500 font-bold shadow-sm">
+                    No data found for this filter.
+                  </div>
+                )}
               </div>
             </div>
           )}

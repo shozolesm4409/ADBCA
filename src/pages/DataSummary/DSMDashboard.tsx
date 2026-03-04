@@ -74,8 +74,8 @@ export default function DSMDashboard() {
     const lentPayment = transactions.filter(t => t.category === 'Loan Lent Payment').reduce((sum, t) => sum + t.amount, 0);
 
     const homeAmount = transactions.filter(t => t.category === 'Home Amount').reduce((sum, t) => sum + t.amount, 0);
-    const bankLoan = transactions.filter(t => t.category === 'Bank Loan').reduce((sum, t) => sum + t.amount, 0);
-    const paidBankLoan = transactions.filter(t => t.category === 'Bank Loan Payment').reduce((sum, t) => sum + t.amount, 0);
+    const bankLoan = transactions.filter(t => t.category === 'Bank Loan' && t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const paidBankLoan = transactions.filter(t => t.category === 'Bank Loan' && t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     const dueLoan = bankLoan - paidBankLoan;
 
     const dps1 = transactions.filter(t => t.category === 'DPS-1').reduce((sum, t) => sum + t.amount, 0);
@@ -535,7 +535,7 @@ export default function DSMDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                        {transactions.filter(t => t.category === 'Home Amount' || t.category === 'Bank Loan' || t.category === 'Bank Loan Payment').map((t, i) => (
+                        {transactions.filter(t => t.category === 'Home Amount' || t.category === 'Bank Loan').map((t, i) => (
                           <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                             <td className="px-6 py-4">{t.date}</td>
                             <td className="px-6 py-4">{t.category}</td>
@@ -557,7 +557,7 @@ export default function DSMDashboard() {
                   { label: 'Total Loan', value: stats?.bankLoan, gradient: 'from-[#b32b2b] to-[#b34724]' },
                   { label: 'Paid Amount', value: stats?.paidBankLoan, gradient: 'from-[#2c70b3] to-[#009aa6]' },
                   { label: 'Due Balance', value: stats?.dueLoan, gradient: 'from-[#279945] to-[#20a88a]' },
-                  { label: 'Installments', value: transactions.filter(t => t.category === 'Bank Loan Payment').length, gradient: 'from-[#b33861] to-[#b38f00]', isCurrency: false },
+                  { label: 'Installments', value: transactions.filter(t => t.category === 'Bank Loan' && t.type === 'expense').length, gradient: 'from-[#b33861] to-[#b38f00]', isCurrency: false },
                 ].map((box, i) => (
                   <div key={i} className={cn("p-2 rounded-lg shadow-lg text-white text-center bg-gradient-to-br", box.gradient)}>
                     <h2 className="text-xl font-black">
@@ -601,8 +601,8 @@ export default function DSMDashboard() {
                       </thead>
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                         {transactions.filter(t => 
-                          bankLoanTable === 'summary' ? (t.category === 'Bank Loan' || t.category === 'Bank Loan Payment') :
-                          bankLoanTable === 'taken' ? (t.category === 'Bank Loan') : (t.category === 'Bank Loan Payment')
+                          bankLoanTable === 'summary' ? (t.category === 'Bank Loan') :
+                          bankLoanTable === 'taken' ? (t.category === 'Bank Loan' && t.type === 'income') : (t.category === 'Bank Loan' && t.type === 'expense')
                         ).map((t, i) => (
                           <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                             <td className="px-6 py-4">{t.date}</td>
