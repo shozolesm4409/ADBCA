@@ -39,7 +39,7 @@ export default function CategoriesSummary() {
       return acc;
     }, {} as Record<string, CategorySummaryRow>);
 
-    return Object.values(grouped).sort((a, b) => {
+    return (Object.values(grouped) as CategorySummaryRow[]).sort((a, b) => {
       // Sort by type first (income then expense), then by category name
       if (a.type !== b.type) {
         return a.type === 'income' ? -1 : 1;

@@ -15,11 +15,13 @@ import IncrementRecordPage from '@/pages/DataRecord/IncrementRecord';
 import LandingPage from '@/pages/LandingPage/LandingPage';
 import EditProfile from '@/pages/DataSummary/EditProfile';
 import TMIEPDFFilter from '@/pages/DataSummary/TMIEPDFFilter';
-import UploadTransactions from '@/pages/Settings/UploadTransactions';
+import UploadTransactions from '@/pages/MoreOption/UploadTransactions';
 import TakenSummary from '@/pages/DataSummary/TakenSummary';
 import CategoriesSummary from '@/pages/DataSummary/CategoriesSummary';
 
 import LoanFlow from '@/pages/DataSummary/LoanFlow';
+
+import ProjectManage from '@/pages/MoreOption/ProjectManage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -167,6 +169,14 @@ export default function App() {
             <PrivateRoute>
               <DashboardLayout>
                 <IncrementRecordPage />
+              </DashboardLayout>
+            </PrivateRoute>
+          } />
+
+          <Route path="/project-manage" element={
+            <PrivateRoute>
+              <DashboardLayout>
+                <ProjectManage />
               </DashboardLayout>
             </PrivateRoute>
           } />

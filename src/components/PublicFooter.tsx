@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface PublicFooterProps {
-  onNavClick?: (view: 'transaction' | 'filter' | 'calculation') => void;
+  onNavClick?: (view: 'transaction' | 'filter' | 'calculation' | 'project') => void;
 }
 
 export default function PublicFooter({ onNavClick }: PublicFooterProps) {
@@ -31,6 +31,12 @@ export default function PublicFooter({ onNavClick }: PublicFooterProps) {
               className="text-slate-400 hover:text-white transition-colors"
             >
               Calculation
+            </button>
+            <button 
+              onClick={() => onNavClick && onNavClick('project')} 
+              className="text-slate-400 hover:text-white transition-colors"
+            >
+              Project
             </button>
           </nav>
         </div>

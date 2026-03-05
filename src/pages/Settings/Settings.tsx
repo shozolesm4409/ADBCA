@@ -8,7 +8,8 @@ import {
   Building2,
   Upload,
   Table as TableIcon,
-  MousePointerClick
+  MousePointerClick,
+  Layout
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTransactions } from '@/hooks/useTransactions';
@@ -16,10 +17,10 @@ import { useTransactions } from '@/hooks/useTransactions';
 // Import refactored components
 import Categories from './Categories';
 import Departments from './Departments';
-import UploadTransactions from './UploadTransactions';
 import Tables from './Tables';
 import Buttons from './Buttons';
 import Actions from './Actions';
+import Landing from './Landing';
 
 export default function Settings() {
   const { 
@@ -38,12 +39,14 @@ export default function Settings() {
     buttonSettings,
     updateButtonSetting,
     actionSettings,
-    updateActionSetting
+    updateActionSetting,
+    landingSettings,
+    updateLandingSetting
   } = useSettings();
 
   const { addTransaction } = useTransactions();
 
-  const [activeTab, setActiveTab] = useState<'categories' | 'departments' | 'tables' | 'buttons' | 'actions'>('categories');
+  const [activeTab, setActiveTab] = useState<'categories' | 'departments' | 'tables' | 'buttons' | 'actions' | 'landing'>('categories');
   const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense' | 'both'>('all');
   const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'visible' | 'hidden'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -190,6 +193,20 @@ export default function Settings() {
               Actions
             </div>
           </button>
+          <button
+            onClick={() => setActiveTab('landing')}
+            className={cn(
+              "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
+              activeTab === 'landing' 
+                ? "border-blue-600 text-blue-600" 
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <div className="flex items-center">
+              <Layout className="w-4 h-4 mr-2" />
+              Landing
+            </div>
+          </button>
         </div>
       </div>
 
@@ -243,6 +260,13 @@ export default function Settings() {
           <Actions 
             actionSettings={actionSettings}
             updateActionSetting={updateActionSetting}
+          />
+        )}
+
+        {activeTab === 'landing' && (
+          <Landing 
+            landingSettings={landingSettings}
+            updateLandingSetting={updateLandingSetting}
           />
         )}
       </div>

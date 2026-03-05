@@ -260,6 +260,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Link>
                   )}
                   <Link
+                    to="/project-manage"
+                    onClick={() => setIsSidebarOpen(false)}
+                    className={cn(
+                      "flex items-center px-4 py-1.5 text-sm font-medium rounded-l transition-colors",
+                      location.pathname === '/project-manage'
+                        ? "bg-blue-50 text-blue-700 border-l-2 border-blue-600"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                    )}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Project Manage
+                  </Link>
+                  <Link
                     to="/upload-transactions"
                     onClick={() => setIsSidebarOpen(false)}
                     className={cn(

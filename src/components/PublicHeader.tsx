@@ -6,7 +6,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface PublicHeaderProps {
-  onNavClick?: (view: 'transaction' | 'filter' | 'calculation') => void;
+  onNavClick?: (view: 'transaction' | 'filter' | 'calculation' | 'project') => void;
 }
 
 export default function PublicHeader({ onNavClick }: PublicHeaderProps) {
@@ -53,6 +53,12 @@ export default function PublicHeader({ onNavClick }: PublicHeaderProps) {
             className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
           >
             Calculation
+          </button>
+          <button 
+            onClick={() => onNavClick && onNavClick('project')} 
+            className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+          >
+            Project
           </button>
         </nav>
 

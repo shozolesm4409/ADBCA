@@ -25,6 +25,13 @@ export interface ActionSetting {
   isHidden: boolean;
 }
 
+export interface LandingSetting {
+  id: string;
+  name: string;
+  label: string;
+  isHidden: boolean;
+}
+
 export function useSettings() {
   const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -32,19 +39,65 @@ export function useSettings() {
   const [tableSettings, setTableSettings] = useState<TableSetting[]>([]);
   const [buttonSettings, setButtonSettings] = useState<ButtonSetting[]>([]);
   const [actionSettings, setActionSettings] = useState<ActionSetting[]>([]);
+  const [landingSettings, setLandingSettings] = useState<LandingSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Always fetch landing settings (public access allowed)
+    const landingSettingsQuery = query(collection(db, 'landing_settings'));
+    
+    const unsubLandingSettings = onSnapshot(landingSettingsQuery, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LandingSetting[];
+      
+      const defaultSettings: LandingSetting[] = [
+        { id: 'landing_home', name: 'landing_home', label: 'Home', isHidden: false },
+        { id: 'landing_filter', name: 'landing_filter', label: 'Filter', isHidden: false },
+        { id: 'landing_calculation', name: 'landing_calculation', label: 'Calculation', isHidden: false },
+        { id: 'landing_project', name: 'landing_project', label: 'Project', isHidden: false },
+      ];
+
+      const existingIds = new Set(data.map(s => s.id));
+      let hasMissing = false;
+
+      defaultSettings.forEach(setting => {
+        if (!existingIds.has(setting.id)) {
+          hasMissing = true;
+          // Only try to initialize if user is authenticated, otherwise just use defaults locally
+          if (user) {
+            setDoc(doc(db, 'landing_settings', setting.id), setting).catch(err => {
+              console.warn(`Could not initialize landing setting ${setting.id} in Firestore:`, err.message);
+            });
+          }
+        }
+      });
+
+      if (!hasMissing || !user) {
+        setLandingSettings(data);
+        setLoading(false);
+      }
+    }, (error) => {
+      console.warn("Firestore landing_settings error (using defaults):", error.message);
+      const defaultSettings: LandingSetting[] = [
+        { id: 'landing_home', name: 'landing_home', label: 'Home', isHidden: false },
+        { id: 'landing_filter', name: 'landing_filter', label: 'Filter', isHidden: false },
+        { id: 'landing_calculation', name: 'landing_calculation', label: 'Calculation', isHidden: false },
+        { id: 'landing_project', name: 'landing_project', label: 'Project', isHidden: false },
+      ];
+      setLandingSettings(defaultSettings);
+      setLoading(false);
+    });
+
     if (!user) {
       setCategories([]);
       setDepartments([]);
       setTableSettings([]);
       setButtonSettings([]);
       setActionSettings([]);
-      setLoading(false);
       setError(null);
-      return;
+      return () => {
+        unsubLandingSettings();
+      };
     }
 
     const catQuery = query(collection(db, 'categories'), orderBy('name', 'asc'));
@@ -211,7 +264,6 @@ export function useSettings() {
 
       if (!hasMissing) {
         setActionSettings(data);
-        setLoading(false);
       }
     }, (error) => {
       console.warn("Firestore action_settings error (using defaults):", error.message);
@@ -227,8 +279,9 @@ export function useSettings() {
         { id: 'loan_flow_action', name: 'loan_flow_action', label: 'Loan Flow Action Column', isHidden: false },
       ];
       setActionSettings(defaultSettings);
-      setLoading(false);
     });
+
+
 
     // Safety timeout: if Firestore doesn't resolve in 3 seconds, stop loading
     const timeout = setTimeout(() => {
@@ -241,6 +294,7 @@ export function useSettings() {
       unsubTableSettings();
       unsubButtonSettings();
       unsubActionSettings();
+      unsubLandingSettings();
       clearTimeout(timeout);
     };
   }, [user]);
@@ -281,6 +335,10 @@ export function useSettings() {
     await updateDoc(doc(db, 'action_settings', id), { isHidden });
   };
 
+  const updateLandingSetting = async (id: string, isHidden: boolean) => {
+    await updateDoc(doc(db, 'landing_settings', id), { isHidden });
+  };
+
   const isTableHidden = (tableName: string) => {
     return tableSettings.find(s => s.name === tableName)?.isHidden || false;
   };
@@ -293,12 +351,17 @@ export function useSettings() {
     return actionSettings.find(s => s.name === actionName)?.isHidden || false;
   };
 
+  const isLandingHidden = (landingName: string) => {
+    return landingSettings.find(s => s.name === landingName)?.isHidden || false;
+  };
+
   return { 
     categories, 
     departments, 
     tableSettings,
     buttonSettings,
     actionSettings,
+    landingSettings,
     loading, 
     error,
     addCategory, 
@@ -310,8 +373,10 @@ export function useSettings() {
     updateTableSetting,
     updateButtonSetting,
     updateActionSetting,
+    updateLandingSetting,
     isTableHidden,
     isButtonHidden,
-    isActionHidden
+    isActionHidden,
+    isLandingHidden
   };
 }

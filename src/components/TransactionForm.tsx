@@ -79,7 +79,7 @@ export default function TransactionForm({ onClose, initialData, isInline = false
     const dynamicDepartments = transactions
       .filter(t => restrictedCategories.includes(t.category.toLowerCase()))
       .map(t => t.department);
-    finalDepartmentsToDisplay = Array.from(new Set(dynamicDepartments)).filter(Boolean);
+    finalDepartmentsToDisplay = Array.from(new Set(dynamicDepartments)).filter((d): d is string => !!d);
   } else if (normalizedCategory === 'saving') {
     // Only show specific departments for Saving, including DPS related
     const dpsDepartments = allDepartments

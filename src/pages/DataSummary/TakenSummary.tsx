@@ -54,7 +54,7 @@ export default function TakenSummary() {
       return acc;
     }, {} as Record<string, SummaryRow>);
 
-    return Object.values(grouped).map(row => {
+    return (Object.values(grouped) as SummaryRow[]).map(row => {
       row.due = row.amount1 - row.amount2;
       row.status = row.due === 0 ? 'Settled' : 'Pending';
       return row;
@@ -83,7 +83,7 @@ export default function TakenSummary() {
       return acc;
     }, {} as Record<string, SummaryRow>);
 
-    return Object.values(grouped).map(row => {
+    return (Object.values(grouped) as SummaryRow[]).map(row => {
       row.due = row.amount1 - row.amount2;
       row.status = row.due === 0 ? 'Settled' : 'Pending';
       return row;

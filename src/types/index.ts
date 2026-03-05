@@ -27,4 +27,13 @@ export interface Department {
 
 export const DEPARTMENTS = ['HR', 'IT', 'Finance', 'Marketing', 'Operations', 'Sales'];
 export const INCOME_TYPES = ['Salary', 'Freelance', 'Investment', 'Sales', 'Other'];
-export const EXPENSE_TYPES = ['Rent', 'Utilities', 'Salaries', 'Equipment', 'Marketing', 'Software', 'Travel', 'Other'];
+export interface Project {
+  id?: string;
+  heading: string;
+  webLink: string;
+  description: string;
+  isLive: boolean;
+  imageUrl?: string;
+  isVisible: boolean;
+  timestamp: number;
+}
