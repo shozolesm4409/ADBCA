@@ -1,6 +1,7 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -16,6 +17,18 @@ async function startServer() {
       appType: "spa",
     });
     app.use(vite.middlewares);
+    
+    // SPA Fallback for development
+    app.get("*", async (req, res, next) => {
+      try {
+        const template = await fs.promises.readFile(path.resolve(__dirname, "index.html"), "utf-8");
+        const html = await vite.transformIndexHtml(req.originalUrl, template);
+        res.status(200).set({ "Content-Type": "text/html" }).end(html);
+      } catch (e) {
+        vite.ssrFixStackTrace(e as Error);
+        next(e);
+      }
+    });
   } else {
     // Serve static files in production
     app.use(express.static(path.resolve(__dirname, "dist")));
