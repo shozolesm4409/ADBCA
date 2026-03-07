@@ -20,6 +20,11 @@ async function startServer() {
     
     // SPA Fallback for development
     app.get("*", async (req, res, next) => {
+      // Skip API routes
+      if (req.originalUrl.startsWith("/api/")) {
+        return next();
+      }
+
       try {
         const template = await fs.promises.readFile(path.resolve(__dirname, "index.html"), "utf-8");
         const html = await vite.transformIndexHtml(req.originalUrl, template);
